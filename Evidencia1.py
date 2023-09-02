@@ -38,6 +38,8 @@ notas = []
 folio_actual = 1
 notas_canceladas = [] 
 
+
+##Cancelar notas
 def cancelar_nota():
     folio_cancelar=int(input("Ingrese el folio de la nota a cancelar:"))
     
