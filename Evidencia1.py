@@ -1,12 +1,31 @@
-def menu_principal():
-    print('-------MENU--------')
-    print('\n(1) Registar nota')
-    print('(2) Consultas y reportes')
-    print('(3) Cancelar nota')
-    print('(4) Salir del sistema')
-    opcion=input('\nIngrese el núnmero del servicio que desea solicitar: ')
-    if opcion == '1':
+def main():
+    while True:
+        print("Menú Principal")
+        print("1. Registrar una nota")
+        print("2. Consultas y reportes")
+        print("3. Salir")
 
+        opcion = int(input("Seleccione una opción: "))
+
+        if opcion == 1:
+            registrar_nota()
+        elif opcion == 2:
+            print("Submenú de Consultas y Reportes")
+            print("1. Consulta por período")
+            print("2. Consulta por folio")
+            print("3. Regresar al menú principal")
+            
+            subopcion = int(input("Seleccione una opción: "))
+            
+            if subopcion == 1:
+                consulta_por_periodo()
+            elif subopcion == 2:
+                consulta_por_folio()
+            elif subopcion == 3:
+                continue
+        elif opcion == 3:
+            print("¡Hasta luego!")
+            break
 
 class Nota:
     def _init_(self, folio, fecha, cliente):
