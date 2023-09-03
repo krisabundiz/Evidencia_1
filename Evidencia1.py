@@ -63,6 +63,7 @@ def cancelar_nota():
             return
     print("La nota no existe o ya está cancelada.")
         
+        
 ##Consulta por folio
 def consulta_folio():
     folio_consulta=int(input("Ingrese el folio de la nota que desea buscar: "))
