@@ -63,3 +63,18 @@ def cancelar_nota():
             return
     print("La nota no existe o ya está cancelada.")
         
+##Consulta por folio
+def consulta_folio():
+    folio_consulta=int(input("Ingrese el folio de la nota que desea buscar: "))
+
+    for nota in notas:
+        if nota.folio == folio.consulta and nota not in notas_canceladas:
+          print ("Folio: ", nota.folio)
+          print ("Fecha: ", nota.fecha)
+          print ("Cliente: ", nota.cliente)
+          print ("Detalle de la nota: ")
+          for servicio in nota.servicios:
+            print ("- Nombre del servicio: ", servicio.nombre)
+            print ("- Costo del servicio: ", servicio.costo)
+          return
+    print ("La nota consultada no existe o corresponde a una nota cancelada.")
