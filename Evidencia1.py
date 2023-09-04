@@ -1,31 +1,4 @@
-def main():
-    while True:
-        print("Menú Principal")
-        print("1. Registrar una nota")
-        print("2. Consultas y reportes")
-        print("3. Salir")
-
-        opcion = int(input("Seleccione una opción: "))
-
-        if opcion == 1:
-            registrar_nota()
-        elif opcion == 2:
-            print("Submenú de Consultas y Reportes")
-            print("1. Consulta por período")
-            print("2. Consulta por folio")
-            print("3. Regresar al menú principal")
-            
-            subopcion = int(input("Seleccione una opción: "))
-            
-            if subopcion == 1:
-                consulta_por_periodo()
-            elif subopcion == 2:
-                consulta_por_folio()
-            elif subopcion == 3:
-                continue
-        elif opcion == 3:
-            print("¡Hasta luego!")
-            break
+import datetime
 
 class Nota:
     def _init_(self, folio, fecha, cliente):
@@ -79,3 +52,56 @@ def consulta_folio():
             print ("- Costo del servicio: ", servicio.costo)
           return
     print ("La nota consultada no existe o corresponde a una nota cancelada.")
+
+def menu_principal():
+    while True:
+        print("\n---------------------------------------------")
+        print("       MENÚ PRINCIPAL TALLER MECANICO         ")
+        print("---------------------------------------------")
+        print("1. Registrar una nota")
+        print("2. Consultas y reportes")
+        print("3. Cancelar una nota")
+        print("4. Recuperar una nota")
+        print("5. Salir")
+        try:
+            opcion = int(input("\nIngrese el número de la operación que desea realizar: "))
+        except Exception:
+            print('\n**Solamente se aceptan dígitos**')
+        else:
+            if 1 <= opcion <= 5:
+                if opcion == 1:
+                    registro_notas()
+                elif opcion == 2:
+                    submenu_consultas()
+                elif opcion == 3:
+                    cancelar_nota()
+                elif opcion == 4:
+                    recuperar_nota()
+                elif opcion == 5:
+                    print("\n**Has salido del sistema*")
+                    break
+            else:
+                print('\n**Opción no valida. Ingrese el número de alguna opción mostrada**')
+
+def submenu_consultas():
+    while True:
+        print("\n---------------------------------------------")
+        print("        SUBMENÚ CONSULTAS Y REPORTES")
+        print("---------------------------------------------")
+        print("1. Consulta por período")
+        print("2. Consulta por folio")
+        print("3. Regresar al menú principal")
+        try:
+            subopcion = int(input("\nIngrese el número de la operación que desea realizar: "))
+        except Exception:
+            print('\n**Solamente se aceptan dígitos**')
+        else:
+            if 1 <= subopcion <= 3:
+                if subopcion == 1:
+                    consulta_periodo()
+                elif subopcion == 2:
+                    consulta_folio()
+                elif subopcion == 3:
+                    return  
+            else:
+                print('\n**Opción no válida. Ingrese el número de alguna opción mostrada**')
