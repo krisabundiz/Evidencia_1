@@ -1,4 +1,5 @@
 import datetime
+
 notas = {}
 notas_canceladas = []
 
@@ -115,7 +116,11 @@ def consulta_periodo():
 
 def cancelar_nota():
     while True:
-        folio_cancelar = input("Ingrese el folio de la nota a cancelar: ")
+        folio_cancelar = input("Ingrese el folio de la nota a cancelar o escriba 'q' si quiere regresar al menú principal: ")
+
+        if folio_cancelar.lower() == 'q':
+          return
+
         try:
             folio_cancelar = int(folio_cancelar)
             if folio_cancelar in notas and folio_cancelar not in notas_canceladas:
