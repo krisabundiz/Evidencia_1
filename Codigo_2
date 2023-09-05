@@ -1,0 +1,195 @@
+import datetime
+
+notas = {}
+notas_canceladas = []
+
+class Nota:
+    def __init__(self, folio, fecha, nombre_cliente, total, detalle_nota):
+        self.folio = folio
+        self.fecha = fecha
+        self.nombre_cliente = nombre_cliente
+        self.total = total
+        self.detalle_nota = detalle_nota
+        self.cancelada = False
+
+def registrar_nota():
+    print('\n** REGISTRA UNA NUEVA NOTA **')
+    while True:
+        try:
+            fecha_actual = datetime.date.today()
+            nombre_cliente = input('\nIngrese el nombre del cliente: ')
+            print("\n---------------------------------------------")
+            print('            SERVICIOS DISPONIBLES')
+            print("---------------------------------------------")
+            print('\n(1) Afinación mayor -------$2200')
+            print('(2) Servicio de frenos ------$2000')
+            print('(3) Servicio de balatas traseras ------$1387')
+            print('(4) Transmisiones ------$3500')
+            print('(5) Cambio de llantas ------$800')
+            servicios = {
+                1: ('Afinación mayor', 2200),
+                2: ('Servicio de frenos', 2000),
+                3: ('Servicio de balatas traseros', 1387),
+                4: ('Transmisiones', 3500),
+                5: ('Cambio de llantas', 800)
+            }
+            total = 0
+            detalle_nota = []
+            while True:
+                servicio = int(input('\nIngrese el número del servicio que se solicitó: '))
+                if servicio in servicios:
+                    nombre_servicio, precio = servicios[servicio]
+                    detalle_nota.append((nombre_servicio, precio))
+                    total += precio
+                else:
+                    print("Por favor, ingrese un número válido para el servicio.")
+                    continue
+                servicio_n = input('¿Desea agregar otro servicio? (S)i (N)o: ')
+                if servicio_n.lower() == 'n':
+                    break
+            nueva_nota = Nota(len(notas) + 1, fecha_actual, nombre_cliente, total, detalle_nota)
+            notas[len(notas) + 1] = nueva_nota
+            print(f'\nNota Agregada: {nueva_nota.__dict__}')
+            agregar_nota = input('¿Desea registrar otra nota? (S)i (N)o: ')
+            if agregar_nota.lower() == 'n':
+                print("\n** NOTA(S) REGISTRADA(S) CORRECTAMENTE **")
+                break
+        except ValueError:
+            print("Por favor, ingrese un número válido para el servicio o la cantidad.")
+
+def cancelar_nota():
+    folio_cancelar = input("Ingrese el folio de la nota a cancelar: ")
+    if not folio_cancelar.isdigit():
+        print("Por favor, ingrese un número válido para el folio.")
+        return
+
+    folio_cancelar = int(folio_cancelar)
+
+    if folio_cancelar in notas and folio_cancelar not in notas_canceladas:
+        nota = notas[folio_cancelar]
+        print(f'Folio: {nota.folio}')
+        print(f'Fecha: {nota.fecha}')
+        print(f'Nombre del cliente: {nota.nombre_cliente}')
+        print(f'Total: ${nota.total:.2f} pesos')
+        print('Servicios:')
+        for servicio in nota.detalle_nota:
+            nombre_servicio, costo_servicio = servicio
+            print(f'- Nombre: {nombre_servicio}')
+            print(f'  Costo: ${costo_servicio:.2f} pesos')
+
+        confirmacion = input("¿Desea cancelar esta nota? (S/N): ").strip().lower()
+        if confirmacion == "s":
+            if nota.cancelada:
+                print("La nota ya está cancelada.")
+            else:
+                nota.cancelada = True
+                notas_canceladas.append(folio_cancelar)
+                print("Nota cancelada.")
+        else:
+            print("Cancelación de nota abortada.")
+    else:
+        print("La nota no existe o ya está cancelada.")
+
+def recuperar_nota():
+    notas_canceladas = [nota for nota in notas.values() if nota.cancelada]
+
+    if notas_canceladas:
+        print("Notas canceladas:")
+        for nota in notas_canceladas:
+            print(f"Folio: {nota.folio}, Fecha: {nota.fecha}, Cliente: {nota.nombre_cliente}")
+
+        folio_recuperar = input("Ingrese el folio de la nota que desea recuperar (o 0 para cancelar): ")
+        if not folio_recuperar.isdigit():
+            print("Por favor, ingrese un número válido para el folio.")
+            return
+
+        folio_recuperar = int(folio_recuperar)
+
+        if folio_recuperar != 0:
+            nota_recuperar = None
+            for nota in notas_canceladas:
+                if nota.folio == folio_recuperar:
+                    nota_recuperar = nota
+
+            if nota_recuperar:
+                print("Detalle de la nota a recuperar:")
+                print(f"Folio: {nota_recuperar.folio}")
+                print(f"Fecha: {nota_recuperar.fecha}")
+                print(f"Nombre del cliente: {nota_recuperar.nombre_cliente}")
+                print("Servicios:")
+                for servicio in nota_recuperar.detalle_nota:
+                    nombre_servicio, costo_servicio = servicio
+                    print(f"- Servicio: {nombre_servicio}")
+                    print(f"  Costo: ${costo_servicio:.2f} pesos")
+                print(f"Monto Total: ${nota_recuperar.total:.2f} pesos")
+
+                confirmacion_recuperar = input("¿Desea recuperar esta nota? (S/N): ").strip().lower()
+                if confirmacion_recuperar == "s":
+                    if not nota_recuperar.cancelada:
+                        print("La nota no está cancelada.")
+                    else:
+                        nota_recuperar.cancelada = False
+                        notas_canceladas.remove(nota_recuperar)
+                        print("Nota recuperada con éxito.")
+                else:
+                    print("Operación de recuperación cancelada.")
+            else:
+                print(f"No se encontró una nota cancelada con el folio {folio_recuperar}.")
+        else:
+            print("Operación de recuperación cancelada.")
+    else:
+        print("No hay notas canceladas para recuperar.")
+
+def mostrar_notas():
+    if notas:
+        print("Notas registradas:")
+        for folio, nota in notas.items():
+            if not nota.cancelada:
+                print(f"Folio: {folio}, Fecha: {nota.fecha}, Cliente: {nota.nombre_cliente}")
+    else:
+        print("No hay notas registradas.")
+
+def mostrar_notas_canceladas():
+    if notas_canceladas:
+        print("Notas canceladas:")
+        for folio in notas_canceladas:
+            nota = notas[folio]
+            print(f"Folio: {folio}, Fecha: {nota.fecha}, Cliente: {nota.nombre_cliente}")
+    else:
+        print("No hay notas canceladas.")
+
+def main():
+    while True:
+        print("\n---------------------------------------------")
+        print("       MENÚ PRINCIPAL TALLER MECÁNICO         ")
+        print("---------------------------------------------")
+        print("1. Registrar una nota")
+        print("2. Cancelar una nota")
+        print("3. Recuperar una nota")
+        print("4. Mostrar todas las notas")
+        print("5. Mostrar notas canceladas")
+        print("6. Salir")
+
+        opcion = input("\nIngrese el número de la operación que desea realizar: ")
+        if not opcion.isdigit():
+            print("Por favor, ingrese un número válido para la opción.")
+            continue
+
+        opcion = int(opcion)
+
+        if opcion == 1:
+            registrar_nota()
+        elif opcion == 2:
+            cancelar_nota()
+        elif opcion == 3:
+            recuperar_nota()
+        elif opcion == 4:
+            mostrar_notas()
+        elif opcion == 5:
+            mostrar_notas_canceladas()
+        elif opcion == 6:
+            print("\n*Has salido del sistema")
+            break
+
+if __name__ == "__main__":
+    main()
