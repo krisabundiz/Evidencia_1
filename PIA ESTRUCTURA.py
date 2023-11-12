@@ -102,7 +102,7 @@ def registrar_nota():
                         break
                     else:
                         print('\n** DATO NO VÁLIDO. POR FAVOR, INGRESE (S) PARA CONFIRMAR LA ACCIÓN O (N) PARA CANCELAR LA OPERACIÓN **')
-        except sqlite3.Error as e:
+        except Error as e:
             print(e)
         except Exception:
             print(f'Se produjo el siguiente error: {sys.exc_info()[0]}')
@@ -148,7 +148,7 @@ def cancelar_nota():
                         break
                     else:
                         print('\n** DATO NO VÁLIDO. POR FAVOR, INGRESE (S) PARA CONFIRMAR LA ACCIÓN O (N) PARA CANCELAR LA OPERACIÓN **')
-        except sqlite3.Error as e:
+        except Error as e:
             print(e)
         except Exception:
             print(f'Se produjo el siguiente error: {sys.exc_info()[0]}')
@@ -204,7 +204,7 @@ def recuperar_nota():
                             print('\n** El FOLIO INGRESADO NO CORRESPONDE A UNA NOTA CANCELADA **')
                     except ValueError:
                         print(f'\n** DATO NO VÁLIDO. POR FAVOR, INGRESE UN DATO VÁLIDO. **')
-        except sqlite3.Error as e:
+        except Error as e:
             print(e)
         except Exception:
             print(f'Se produjo el siguiente error: {sys.exc_info()[0]}')
@@ -339,7 +339,7 @@ def consultas_reportes_notas():
                                     print(nueva_tabla)
                                 else:
                                     print(f'\n** LA NOTA ASOCIADA AL FOLIO {clave_consultar} NO HA SIDO ENCONTRADA O SE ENCUENTRA CANCELADA. POR FAVOR, VERIFICA LA INFORMACIÓN E INTENTA NUEVAMENTE. **')
-                    except sqlite3.Error as e:
+                    except Error as e:
                         print(e)
                     except Exception:
                         print(f'Se produjo el siguiente error: {sys.exc_info()[0]}')
