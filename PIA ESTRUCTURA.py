@@ -107,7 +107,7 @@ def registrar_nota():
         except Exception:
             print(f'Se produjo el siguiente error: {sys.exc_info()[0]}')
         finally:
-            conn.close
+            conn.close()
             
 def cancelar_nota():
     while True:
