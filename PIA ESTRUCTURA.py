@@ -797,48 +797,427 @@ def menu_clientes():
         except ValueError:
               print('\n** OPCIÓN NO VÁLIDA. POR FAVOR, REGISTRE EL NÚMERO DE ALGUNA OPCIÓN MOSTRADA **')
 
-función menu_principal():
-    mientras Verdadero:
-        mostrar '---------------------------------------'
-        mostrar '  BIENVENIDO AL MENU PRINCIPAL   '
-        mostrar '---------------------------------------'
-        mostrar '1. Notas'
-        mostrar '2. Clientes'
-        mostrar '3. Servicios'
-        mostrar '4. Estadísticas'
-        mostrar '5. Salir'
-        opción = ingresar_input('Ingrese el número del menú al que desea ingresar: ')
-        
-        si opción es un número:
-            opción = convertir_a_entero(opción)
-            
-            si opción es 1:
-                mostrar "Entraste al menú de notas"
-                llamar a la función menu_notas()
-                
-            sino, si opción es 2:
-                llamar a la función menu_clientes()
-                
-            sino, si opción es 3:
-                mostrar "Entraste a Servicios"
-                llamar a la función menu_servicios()
-                
-            sino, si opción es 4:
-                mostrar "Entraste a Estadísticas"
-                llamar a la función menu_estadisticas()
-                
-            sino, si opción es 5:
-                respuesta = ingresar_input("¿Desea salir? (S/N) ")
-                si respuesta en minúsculas es 's':
-                    salir del bucle
-                
-            sino:
-                mostrar "Opción no válida. Por favor, elige una opción válida."
-                
-        sino:
-            mostrar '\nOpción no válida. Por favor, elige una opción válida.'
 
-llamar a la función menu_principal()
+def agregar_servicio():
+    while True:
+        print('\════════════════════════════')
+        print('  AGREGAR UN NUEVO SERVICIO')
+        print('════════════════════════════')
+        print('\nNota: Escriba (0) si desea volver al menú clientes')
+        while True:
+            try:
+                descripcion = input('\nIngrese el nombre del servicio: ')
+                if descripcion == '0' :
+                    print('\n** OPERACION CANCELADA, VOLVIENDO AL MENÚ DE SERVICIOS **')
+                    return
+                if descripcion.strip() == '':
+                    print('\n** EL DATO NO PUEDE OMITIRSE, INGRESE UN DATO O (0) PARA VOLVER AL MENÚ DE SERVICIOS **')
+                    continue
+                if descripcion.isdigit():
+                    print('\n** ERROR, INGRESE UN NOMBRE DE SERVICIO VÁLIDO O (0) PARA VOLVER AL MENÚ DE SERVICIOS**')
+                    continue
+                else:
+                    break
+            except ValueError as e:
+                print(e)
+        while True:
+            try:
+                costo = input('\nIngrese el costo del servicio: ')
+                if costo.strip() == '':
+                    print('\n** ERROR, EL DATO NO PUEDE OMITIRSE, INGRESE UN DATO VÁLIDO **')
+                    continue
+                costo = float(costo)
+                if costo <= 0.0:
+                    print('\n** EL COSTO DEL SERVICIO DEBE SER MAYOR A 0.0, INGRESE UN COSTO VÁLIDO **')
+                    continue
+                else:
+                    break
+            except ValueError:
+                print('\n** DATO NO VÁLIDO, INGRESE UN COSTO **')
+        try:
+            with sqlite3.connect('C:/Users/betyh/Downloads/tallermecanico.db') as conn:
+                mi_cursor = conn.cursor()
+                datos = (descripcion,costo)
+                mi_cursor.execute('INSERT INTO servicios (descripcion, costo, estadoS) VALUES (?,?, 1)', datos)
+                print('\n**Servicio registrado **')
+                print(f'Clave asignada: {mi_cursor.lastrowid}')
+        except Error as e:
+            print(f'Se produjo el siguiente error: {e}')
+        finally:
+            conn.close()
+        try:
+            while True:
+                agregar_servicio = input('\n¿Desea agregar otro servicio? (S)i (N)o: ')
+                if agregar_servicio.lower() == 's':
+                    break
+                elif agregar_servicio.lower() == 'n':
+                    print('\n** SERVICIO(S) REGISTRADO CORRECTAMENTE **')
+                    raise StopIteration
+                elif agregar_servicio.strip() == '':
+                   print("ERROR, NO SE PUEDE OMITIR, INGRESA UN DATO VÁLIDO")
+                else:
+                    print('\n** DATO NO VÁLIDO, INGRESE (S)I Ó (N)O **')
+                    continue
+        except StopIteration:
+            break
+
+def suspender_servicio():
+    while True:
+        try:
+            with sqlite3.connect('C:/Users/betyh/Downloads/tallermecanico.db') as conn:
+                mi_cursor = conn.cursor()
+                mi_cursor.execute('SELECT ClaveServicio, descripcion FROM servicios WHERE estadoS = 1')
+                datos = mi_cursor.fetchall()
+                if not datos:
+                    print('\nNO HAY SERVICIOS DISPONIBLES.')
+                else:
+                    tabla = PrettyTable()
+                    tabla.field_names = ["Clave Servicio", "Nombre"]
+                    tabla.align["Clave Servicio"] = "r"
+                    tabla.align["Nombre"] = "l"
+                    for dato in datos:
+                        tabla.add_row(dato)
+                    print('\n       Servicios Suspendidos ')
+                    print(tabla)
+        except Exception as e:
+            print(f'Se produjo el siguiente error: {e}')
+        print('\n   SUSPENDER UN SERVICIO')
+        print('\nNota: Escriba (0) si desea volver al menú principal')
+        idservicio_suspender = input('Ingresa la clave del servicio a suspender: ')
+        if idservicio_suspender == '0':
+            return
+        try:
+            idservicio_suspender = int(idservicio_suspender)
+        except ValueError:
+            print('\n** ERROR, ingrese un número de servicio válido o escriba "0" para volver al menú principal **')
+            continue
+        try:
+            with sqlite3.connect('C:/Users/betyh/Downloads/tallermecanico.db') as conn:
+                mi_cursor = conn.cursor()
+                mi_cursor.execute('SELECT ClaveServicio, descripcion, costo FROM servicios WHERE ClaveServicio = ? AND estadoS = 1', (idservicio_suspender,))
+                servicio_detalle = mi_cursor.fetchone()
+                if not servicio_detalle:
+                    print('\n** ERROR, NO SE ENCONTRÓ UN SERVICIO CON ESA CLAVE O SE ENCUENTRA SUSPENDIDO **')
+                    continue
+                else:
+                    tabla = PrettyTable()
+                    tabla.field_names = ["Clave Servicio", "Nombre", "Costo"]
+                    tabla.align["Clave Servicio"] = "r"
+                    tabla.align["Nombre"] = "l"
+                    tabla.align["Costo"] = "r"
+                    tabla.add_row(servicio_detalle)
+                    print('\n       Detalle del Servicio ')
+                    print(tabla)
+                while True:
+                  confirmacion = input('\n¿Desea suspender este servicio? (S)i (N)o: ')
+                  if confirmacion.lower() == 'n':
+                    print("** SERVICIO NO SUSPENDIDO **")
+                    menu_servicios()
+                  elif confirmacion.strip() == '':
+                     print("\n** ERROR, ESTE CAMPO NO SE PUEDE OMITIR, INGRESA UN DATO VÁLIDO **")
+                  elif confirmacion.lower() == 's':
+                    mi_cursor.execute('UPDATE servicios SET estadoS = 0 WHERE ClaveServicio = ?', (idservicio_suspender,))
+                    conn.commit()
+                    print('\n** Servicio suspendido correctamente **')
+                    menu_servicios()
+                  else:
+                    print('\n** ERROR, entrada no válida. Por favor, ingrese "S" o "N" **')
+        except sqlite3.Error as e:
+          print(f'SE PRODUJO EL SIGUIENTE ERROR: {e}')
+
+def recuperar_servicio():
+    while True:
+        try:
+            with sqlite3.connect('C:/Users/betyh/Downloads/tallermecanico.db') as conn:
+                mi_cursor = conn.cursor()
+                mi_cursor.execute('SELECT ClaveServicio, descripcion, costo FROM servicios WHERE estadoS = 0')
+                datos = mi_cursor.fetchall()
+                if not datos:
+                    print('\nNo hay servicios suspendidos.')
+                else:
+                    tabla_suspensos = PrettyTable()
+                    tabla_suspensos.field_names = ["Clave Servicio", "Nombre", "Costo"]
+                    for dato in datos:
+                        tabla_suspensos.add_row(dato)
+                    print('\n       Servicios Suspendidos ')
+                    print(tabla_suspensos)
+        except Exception as e:
+            print(f'Se produjo el siguiente error: {e}')
+        print('\n   RECUPERAR UN SERVICIO')
+        print('\nNota: Escriba (0) si desea volver al menú principal')
+        while True:
+            idservicio_recuperar = input('Ingresa la clave del servicio a recuperar: ')
+            if idservicio_recuperar == '0':
+                return
+            elif idservicio_recuperar.strip() == '':
+                print("ERROR, ESTE CAMPO NO SE PUEDE OMITIR, INGRESE UN DATO VÁLIDO")
+            elif idservicio_recuperar.isdigit():
+                try:
+                    with sqlite3.connect('C:/Users/betyh/Downloads/tallermecanico.db') as conn:
+                        mi_cursor = conn.cursor()
+                        mi_cursor.execute('SELECT ClaveServicio, descripcion, costo FROM servicios WHERE ClaveServicio = ? AND estadoS = 0', (idservicio_recuperar,))
+                        servicio_detalle = mi_cursor.fetchone()
+                        if not servicio_detalle:
+                            print('\n** ERROR, NO SE ENCONTRÓ UN SERVICIO CON ESA CLAVE **')
+                            continue
+                        clave, descripcion, costo = servicio_detall
+                        tabla_servicio = PrettyTable()
+                        tabla_servicio.field_names = ["Clave Servicio", "Nombre", "Costo"]
+                        tabla_servicio.add_row([clave, descripcion, costo])
+                        print('\n       Detalle del Servicio ')
+                        print(tabla_servicio)
+                        while True:
+                            confirmacion = input('\n¿Desea recuperar este servicio? (S)i (N)o: ').lower()
+                            if confirmacion == 's':
+                                mi_cursor.execute('UPDATE servicios SET estadoS = 1 WHERE ClaveServicio = ?', (idservicio_recuperar,))
+                                conn.commit()
+                                print('\n** Servicio recuperado correctamente **')
+                                menu_servicios()
+                            elif confirmacion == 'n':
+                                print('\n** OPERACIÓN CANCELADA, VOLVIENDO AL MENÚ PRINCIPAL **')
+                                break
+                            elif confirmacion.strip() == '':
+                                print("ERROR, ESTE CAMPO NO SE PUEDE OMITIR, INGRESE UN DATO VÁLIDO")
+                            else:
+                                print('\n** ERROR, entrada no válida. Por favor, ingrese "S" o "N" **')
+                        break
+                except sqlite3.Error as e:
+                    print(f'Se produjo el siguiente error: {e}')
+            else:
+                print("** ERROR, INGRESA UN DATO VÁLIDO **")
+
+def listado_servicios_registrados():
+    while True:
+        print('---------------------------------------')
+        print('SUBMENÚ LISTADO DE SERVICIOS REGISTRADOS')
+        print('---------------------------------------')
+        print('1. Ordenado por clave')
+        print('2. Ordenado por nombre de servicio')
+        print('3. Volver al menú anterior')
+        opcion = input('\nIngresa el número de la operación que deseas realizar: ')
+        encabezados = ['Clave', 'Nombre de Servicio', 'Descripción', 'Costo']
+        if opcion == '1':
+            try:
+                with sqlite3.connect('C:/Users/betyh/Downloads/tallermecanico.db') as conn:
+                  mi_cursor = conn.cursor()
+                  mi_cursor.execute('SELECT ClaveServicio, descripcion, costo FROM servicios ORDER BY ClaveServicio')
+                  datos = mi_cursor.fetchall()
+                  if datos:
+                    tabla = PrettyTable()
+                    tabla.field_names = ["ClaveServicio", "Descripción", "Costo"]
+                    for ClaveServicio, descripcion, costo in datos:
+                      tabla.add_row([ClaveServicio, descripcion, costo])
+                    print(tabla)
+                    print("\nSERVICIOS REGISTRADOS")
+                  else:
+                    print("\n** NO HAY SERVICIOS REGISTRADOS **")
+                  while True:
+                    print('\n---------------------------------------')
+                    print('           EXPORTAR REPORTE')
+                    print('---------------------------------------')
+                    print('1. Exportar reporte como archivo EXCEL')
+                    print('2. Exportar reporte como archivo CSV')
+                    print('3. Volver al menú de reportes')
+                    exportar = input('\nIngresa el número de la operación que deseas realizar: ')
+                    if exportar == '1':
+                        fecha_reporte = datetime.now().strftime('%m_%d_%Y')
+                        nombre_excel = f'ReporteServiciosPorClave_{fecha_reporte}.xlsx'
+                        wb = Workbook()
+                        hoja = wb.active
+                        hoja.append(encabezados)
+                        for dato in datos:
+                            hoja.append(dato)
+                        wb.save(nombre_excel)
+                        print(f'\nInforme {nombre_excel} exportado correctamente')
+                    elif exportar == '2':
+                        fecha_reporte = datetime.now().strftime('%m_%d_%Y')
+                        nombre_csv = f'ReporteServiciosPorClave_{fecha_reporte}.csv'
+                        with open(nombre_csv, 'w', newline='') as reporte_csv:
+                            grabador = csv.writer(reporte_csv)
+                            grabador.writerow(encabezados)
+                            grabador.writerows(datos)
+                        print(f'\nInforme {nombre_csv} exportado correctamente')
+                    elif exportar == '3':
+                        break
+                    elif exportar.strip() == '':
+                      print("**ERROR, ESTE CAMPO NO SE PUEDE OMITIR**")
+            except Exception as e:
+                print(f"Error: {e}")
+        elif opcion == '2':
+            try:
+                with sqlite3.connect('C:/Users/betyh/Downloads/tallermecanico.db') as conn:
+                  mi_cursor = conn.cursor()
+                  mi_cursor.execute('SELECT ClaveServicio, descripcion, costo FROM servicios ORDER BY descripcion')
+                  datos = mi_cursor.fetchall()
+                  if datos:
+                    tabla = PrettyTable()
+                    tabla.field_names = ["ClaveServicio", "Descripción", "Costo"]
+                    for ClaveServicio, descripcion, costo in datos:
+                      tabla.add_row([ClaveServicio, descripcion, costo])
+                    print(tabla)
+                    print("\nSERVICIOS REGISTRADOS")
+                  else:
+                    print("\n** NO HAY SERVICIOS REGISTRADOS **")
+                while True:
+                  print('\n---------------------------------------')
+                  print('           EXPORTAR REPORTE')
+                  print('---------------------------------------')
+                  print('1. Exportar reporte como archivo EXCEL')
+                  print('2. Exportar reporte como archivo CSV')
+                  print('3. Volver al menú de reportes')
+                  exportar = input('\nIngresa el número de la operación que deseas realizar: ')
+                  if exportar == '1':
+                        fecha_reporte = datetime.now().strftime('%m_%d_%Y')
+                        nombre_excel = f'ReporteServiciosPorNombre_{fecha_reporte}.xlsx'
+                        wb = Workbook()
+                        hoja = wb.active
+                        hoja.append(encabezados)
+                        for dato in datos:
+                            hoja.append(dato)
+                        wb.save(nombre_excel)
+                        print(f'\nInforme {nombre_excel} exportado correctamente')
+                  elif exportar == '2':
+                        fecha_reporte = datetime.now().strftime('%m_%d_%Y')
+                        nombre_csv = f'ReporteServiciosPorNombre_{fecha_reporte}.csv'
+                        with open(nombre_csv, 'w', newline='') as reporte_csv:
+                            grabador = csv.writer(reporte_csv)
+                            grabador.writerow(encabezados)
+                            grabador.writerows(datos)
+                        print(f'\nInforme {nombre_csv} exportado correctamente')
+                  elif exportar == '3':
+                        break
+                  elif exportar.strip() == '':
+                    print("** ERROR, ESTE CAMPO NO SE PUEDE OMITIR **")
+                  else:
+                    print("** ERROR, INGRESE UN DATO VÁLIDO **")
+            except Exception as e:
+                print(f"Error: {e}")
+        elif opcion == '3':
+            break
+        elif opcion.strip() == '':
+          print("** ERROR, ESTE CAMPO NO SE PUEDE OMITIR **")
+
+def consultas_reportes_servicios():
+    while True:
+        print('\n  ═══════════════════════════════════')
+        print('   CONSULTAS Y REPORTES DE SERVICIOS')
+        print('  ═══════════════════════════════════')
+        print('1. Listado de servicios registrados')
+        print('2. Búsqueda por clave')
+        print('3. Búsqueda por nombre')
+        print('4. Volver al menú servicios')
+        consulta = input('\nIngresa el número de la operación que desea realizar: ')
+        if consulta == '1':
+          listado_servicios_registrados()
+        elif consulta == '2':
+           while True:
+              try:
+                with sqlite3.connect('C:/Users/betyh/Downloads/tallermecanico.db') as conn:
+                  mi_cursor = conn.cursor()
+                  mi_cursor.execute('SELECT ClaveServicio, descripcion FROM servicios ORDER BY ClaveServicio')
+                  datos_servicios = mi_cursor.fetchall()
+                  tabla_servicios = PrettyTable()
+                  tabla_servicios.field_names = ['CLAVE', 'DESCRIPCION']
+                  for servicio in datos_servicios:
+                    tabla_servicios.add_row(servicio)
+                  print(tabla_servicios)
+                clave_consultar = input('\nIngrese la clave del servicio a consultar (o escriba "0" para volver): ')
+                if clave_consultar.lower() == '0':
+                    break
+                try:
+                    clave_consultar = int(clave_consultar)
+                except ValueError:
+                    print('\n** ERROR, INGRESE UN NÚMERO DE SERVICIO VÁLIDO O ESCRIBA "0" PARA REGRESAR AL MENU ANTERIOR **')
+                mi_cursor.execute('SELECT ClaveServicio, descripcion, costo FROM servicios WHERE ClaveServicio = ?', (clave_consultar,))
+                datos_servicio_consultado = mi_cursor.fetchone()
+                if not datos_servicio_consultado:
+                    print(f'\n** NO SE ENCONTRÓ UN REGISTRO ASOCIADO A LA CLAVE {clave_consultar} **')
+                else:
+                    tabla_servicio_consultado = PrettyTable()
+                    tabla_servicio_consultado.field_names = ['CLAVE', 'DESCRIPCION', 'COSTO']
+                    tabla_servicio_consultado.add_row(datos_servicio_consultado)
+                    print(f'\n    Detalle del Servicio Consultado')
+                    print(tabla_servicio_consultado)
+                    break
+              except Exception as e:
+                print(f'Se produjo el siguiente error: {e}')
+        elif consulta == '3':
+                while True:
+                    print('\nNota: Escriba (0) si desea volver a consultas y reportes de servicios')
+                    try:
+                        nombre_consultar = input('\nIngrese el nombre del servicio a consultar: ')
+                        if nombre_consultar == 0:
+                            break
+                        elif nombre_consultar.strip() == '':
+                          print("ERROR, ESTE CAMPO NO SE PUEDE OMITIR, INGRESE UN DATO VÁLIDO")
+                        elif nombre_consultar.isdigit():
+                          print("**ERROR, INGRESE UN NOMBRE DE SERVICIO VÁLIDO **")
+                        else:
+                            with sqlite3.connect('C:/Users/betyh/Downloads/tallermecanico.db') as conn:
+                                mi_cursor = conn.cursor()
+                                datos = {'nombre': nombre_consultar.lower()}
+                                mi_cursor.execute('SELECT ClaveServicio, descripcion, costo FROM servicios WHERE LOWER (descripcion) = :nombre', datos)
+                                datos1 = mi_cursor.fetchall()
+                                tabla = PrettyTable()
+                                tabla.field_names = ['CLAVE', 'DESCRIPCION', 'COSTO']
+                                if datos1:
+                                    print(f'\n    Servicio Encontrado')
+                                    for dato in datos1:
+                                        tabla.add_row(dato)
+                                    print(tabla)
+                                    break
+                                else:
+                                    print(f'\n** NO SE ENCONTRÓ UN REGISTRO ASOCIADO AL {nombre_consultar}')
+                    except Exception:
+                        print(f'\n** DATO NO VÁLIDO. INGRESE EL NOMBRE DE ALGÚN SERVICIO **')
+        elif consulta == '4':
+                return
+        elif consulta.strip() == ' ':
+          print("** ERROR, NO SE PUEDE OMITIR ESTE CAMPO **")
+        else:
+          print("** ERROR, INGRESE UN DATO VÁLIDO **")
+
+def menu_servicios():
+    while True:
+        print('\n---------------------------------------')
+        print('  BIENVENIDO AL MENU DE SERVICIOS   ')
+        print('---------------------------------------')
+        print('1. Agregar un servicio')
+        print('2. Suspender un servicio')
+        print('3. Recuperar un servicio')
+        print('4. Consultas y reportes')
+        print('5. Regresar al menú principal')
+        opcion = input('\nIngrese el número de la opcion a la que desea ingresar: ')
+        if opcion.isdigit():
+            opcion = int(opcion)
+            if opcion == 1:
+                agregar_servicio()
+            elif opcion == 2:
+                suspender_servicio()
+            elif opcion == 3:
+                recuperar_servicio()
+            elif opcion == 4:
+                consultas_reportes_servicios()
+            elif opcion == 5:
+                while True:
+                   respuesta = input("¿Desea salir? (S/N) ")
+                   if respuesta.upper() == 'S':
+                      menu_principal()
+                   elif respuesta.upper() == 'N':
+                       menu_servicios()
+                   elif respuesta.strip() == '':
+                      print("No se puede omitir")
+                   elif respuesta.isdigit():
+                      print("Ingrese una opción ")
+                   else:
+                       print("**Ingrese una opción válida")
+            else:
+                print("Opción no válida. Por favor, elige una opción válida.")
+        else:
+            print('\nOpción no válida. Por favor, elige una opción válida.')
+
+
+
 
 def menu_estadisticas():
     while True:
