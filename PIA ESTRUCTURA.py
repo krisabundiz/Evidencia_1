@@ -1216,34 +1216,6 @@ def menu_servicios():
         else:
             print('\nOpción no válida. Por favor, elige una opción válida.')
 
-
-
-
-def menu_estadisticas():
-    while True:
-        print('---------------------------------------')
-        print('     MENÚ DE ESTADÍSTICAS         ')
-        print('---------------------------------------')
-        print('1. Servicios más prestados')
-        print('2. Clientes con más notas')
-        print('3. Promedio de montos de las notas')
-        print('4. Salir')
-        opcion_estadisticas = input('Ingrese el número de la opción deseada: ')
-        if opcion_estadisticas.isdigit():
-            opcion_estadisticas = int(opcion_estadisticas)
-            if opcion_estadisticas == 1:
-                obtener_servicios_mas_prestados()
-            elif opcion_estadisticas == 2:
-                ClientesMasNotas()
-            elif opcion_estadisticas == 3:
-                Promedio_montos_notas()
-            elif opcion_estadisticas == 4:
-                menu_principal()
-            else:
-                print("** ERROR, INGRESE UNA OPCIÓN VÁLIDA **")
-        else:
-            print('\n** ERROR, INGRESE UNA OPCIÓN VÁLIDA **')
-
 def obtener_servicios_mas_prestados():
     while True:
         try:
