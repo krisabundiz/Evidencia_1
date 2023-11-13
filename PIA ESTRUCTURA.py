@@ -840,5 +840,328 @@ función menu_principal():
 
 llamar a la función menu_principal()
 
+def menu_estadisticas():
+    while True:
+        print('---------------------------------------')
+        print('     MENÚ DE ESTADÍSTICAS         ')
+        print('---------------------------------------')
+        print('1. Servicios más prestados')
+        print('2. Clientes con más notas')
+        print('3. Promedio de montos de las notas')
+        print('4. Salir')
+        opcion_estadisticas = input('Ingrese el número de la opción deseada: ')
+        if opcion_estadisticas.isdigit():
+            opcion_estadisticas = int(opcion_estadisticas)
+            if opcion_estadisticas == 1:
+                obtener_servicios_mas_prestados()
+            elif opcion_estadisticas == 2:
+                ClientesMasNotas()
+            elif opcion_estadisticas == 3:
+                Promedio_montos_notas()
+            elif opcion_estadisticas == 4:
+                menu_principal()
+            else:
+                print("** ERROR, INGRESE UNA OPCIÓN VÁLIDA **")
+        else:
+            print('\n** ERROR, INGRESE UNA OPCIÓN VÁLIDA **')
+
+def obtener_servicios_mas_prestados():
+    while True:
+        try:
+            print('\n-------------------------------------')
+            print('      SERVICIOS MÁS PRESTADOS')
+            print('--------------------------------------')
+            cantidad_servicios = int(input('\nIngrese la cantidad de servicios más prestados a identificar o ingrese "0" para regresar al menú de estadisticas: '))
+            if cantidad_servicios == 0:
+                menu_estadisticas()
+                return
+            elif cantidad_servicios < 1:
+                print('\n** LA CANTIDAD DE SERVICIOS A OBSERVAR DEBE SER AL MENOS 1. **')
+                continue
+            while True:
+                fecha_inicial_str = input('\nIngrese la fecha inicial del período a reportar (DD/MM/YYYY): ')
+                try:
+                    fecha_inicial = datetime.strptime(fecha_inicial_str, "%d/%m/%Y").date()
+                    if fecha_inicial > datetime.now().date():
+                        print('\n** LA FECHA INICIAL NO PUEDE SER POSTERIOR A LA FECHA ACTUAL. **')
+                        continue
+                    break
+                except ValueError:
+                    print('\n** ERROR, FORMATO DE FECHA INCORRECTO. INTENTE NUEVAMENTE **')
+            while True:
+                fecha_final_str = input('\nIngrese la fecha final del período a reportar (DD/MM/YYYY): ')
+                try:
+                    fecha_final = datetime.strptime(fecha_final_str, "%d/%m/%Y").date()
+                    if fecha_final > datetime.now().date():
+                        print('\n** LA FECHA FINAL NO PUEDE SER POSTERIOR A LA FECHA ACTUAL. **')
+                        continue
+                    if fecha_final < fecha_inicial:
+                        print('\n** LA FECHA FINAL DEBE SER MAYOR O IGUAL A LA FECHA INICIAL. **')
+                        continue
+                    break
+                except ValueError:
+                    print('\n** ERROR, FORMATO DE FECHA INCORRECTO. INTENTE NUEVAMENTE **')
+            with sqlite3.connect('C:/Users/betyh/Downloads/tallermecanico.db') as conn:
+                mi_cursor = conn.cursor()
+                mi_cursor.execute('''
+                    SELECT s.descripcion, COUNT(d.ClaveServicio) as cantidad_prestada
+                    FROM servicios s
+                    JOIN detalle d ON s.ClaveServicio = d.ClaveServicio
+                    JOIN notas n ON d.folio = n.folio
+                    WHERE n.fecha BETWEEN ? AND ?
+                    GROUP BY s.descripcion
+                    ORDER BY cantidad_prestada DESC
+                    LIMIT ?;
+                ''', (fecha_inicial, fecha_final, cantidad_servicios))
+                datos = mi_cursor.fetchall()
+                if not datos:
+                    print('\nNo hay servicios prestados en el período especificado.')
+                else:
+                    tabla = PrettyTable()
+                    tabla.field_names = ["Servicio", "Cantidad Prestada"]
+                    for servicio, cantidad_prestada in datos:
+                        tabla.add_row([servicio, cantidad_prestada])
+                    print('\n       Servicios Más Prestados ')
+                    print(tabla)
+                    while True:
+                        print('\n---------------------------------------')
+                        print('           EXPORTAR REPORTE')
+                        print('---------------------------------------')
+                        print('1. Exportar reporte como archivo EXCEL')
+                        print('2. Exportar reporte como archivo CSV')
+                        print('3. Volver al menú de Estadísticas')
+                        exportar = int(input('\nIngresa el número de la operación que deseas realizar: '))
+                        if exportar == 1:
+                            fecha_reporte = datetime.now().strftime('%d_%m_%Y')
+                            nombre_excel = f'ReporteServiciosMasPrestados_{fecha_inicial.strftime("%d_%m_%Y")}_{fecha_final.strftime("%d_%m_%Y")}.xlsx'
+                            wb = Workbook()
+                            hoja = wb.active
+                            hoja.append(["Servicio", "Cantidad Prestada"])
+                            for servicio, cantidad_prestada in datos:
+                                hoja.append([servicio, cantidad_prestada])
+                            wb.save(nombre_excel)
+                            print(f'\nInforme {nombre_excel} exportado correctamente')
+                            menu_estadisticas()
+                        elif exportar == 2:
+                            fecha_reporte = datetime.now().strftime('%d_%m_%Y')
+                            nombre_csv = f'ReporteServiciosMasPrestados_{fecha_inicial.strftime("%d_%m_%Y")}_{fecha_final.strftime("%d_%m_%Y")}.csv'
+                            with open(nombre_csv, 'w', newline='') as reporte_csv:
+                                grabador = csv.writer(reporte_csv)
+                                grabador.writerow(["Servicio", "Cantidad Prestada"])
+                                grabador.writerows(datos)
+                            print(f'\nInforme {nombre_csv} exportado correctamente')
+                            menu_estadisticas()
+                        elif exportar == 3:
+                            print('\nVolviendo al Menú de Estadísticas.')
+                            menu_estadisticas()
+                        else:
+                            print('\n** ERROR, OPCION NO VÁLIDA, INTENTE NUEVAMENTE.')
+        except ValueError:
+            print('\n** DEBE INGRESAR UN NÚMERO ENTERO VÁLIDO. **')
+        except Exception as e:
+            print(f'Se produjo el siguiente error: {e}')
+            
+def clientes_mas_notas():
+    while True:
+        try:
+            cantidad_clientes = int(input('\nIngrese la cantidad de clientes con más notas a identificar o ingrese "0" para regresar al menú anterior: '))
+            if cantidad_clientes == 0:
+                menu_estadisticas()
+                return                  
+            elif cantidad_clientes < 1:
+                print('\n** LA CANTIDAD DE CLIENTES A OBSERVAR DEBE SER AL MENOS 1. **')
+                continue            
+            while True:
+                fecha_inicial_str = input('\nIngrese la fecha inicial del período a reportar (DD/MM/YYYY): ')
+                try:
+                    fecha_inicial = datetime.strptime(fecha_inicial_str, "%d/%m/%Y").date()
+
+                    if fecha_inicial > datetime.now().date():
+                        print('\n** LA FECHA INICIAL NO PUEDE SER MAYOR A LA FECHA ACTUAL. **')
+                        continue
+                    break
+                except ValueError:
+                    print('\n** ERROR, FORMATO DE FECHA INCORRECTO. INTENTE NUEVAMENTE **')
+            while True:
+                fecha_final_str = input('\nIngrese la fecha final del período a reportar (DD/MM/YYYY): ')
+                try:
+                    fecha_final = datetime.strptime(fecha_final_str, "%d/%m/%Y").date()
+                    if fecha_final > datetime.now().date():
+                        print('\n** LA FECHA FINAL NO PUEDE SER POSTERIOR A LA FECHA ACTUAL. **')
+                        continue
+                    if fecha_final < fecha_inicial:
+                        print('\n** LA FECHA FINAL DEBE SER MAYOR O IGUAL A LA FECHA INICIAL. **')
+                        continue
+                    break
+                except ValueError:
+                    print('\n** ERROR, FORMATO DE FECHA INCORRECTO. INTENTE NUEVAMENTE **')
+
+            with sqlite3.connect('C:/Users/betyh/Downloads/tallermecanico.db') as conn:
+                mi_cursor = conn.cursor()
+                mi_cursor.execute('''
+                SELECT clientes.ClaveCliente, clientes.nombre, COUNT(notas.folio) as cantidad_notas
+                FROM clientes
+                LEFT JOIN notas ON clientes.ClaveCliente = notas.ClaveCliente
+                WHERE notas.fecha BETWEEN ? AND ?
+                GROUP BY clientes.ClaveCliente
+                ORDER BY cantidad_notas DESC
+                LIMIT ?;
+                ''', (fecha_inicial, fecha_final, cantidad_clientes))
+                clientes_con_mas_notas = mi_cursor.fetchall()
+                if clientes_con_mas_notas:
+                    encabezados = ['Clave Cliente', 'Nombre', 'Cantidad de Notas']
+                    print('\n---------------------------------------')
+                    print('     CLIENTES CON MÁS NOTAS')
+                    print('---------------------------------------')
+                    tabla = PrettyTable()
+                    tabla.field_names = encabezados
+                    for cliente in clientes_con_mas_notas:
+                        tabla.add_row(cliente)
+                    print(tabla)
+                    print('\n---------------------------------------')
+                    print('           EXPORTAR REPORTE')
+                    print('---------------------------------------')
+                    print('1. Exportar reporte como archivo EXCEL')
+                    print('2. Exportar reporte como archivo CSV')
+                    print('3. Volver al menú de Estadísticas')
+                    exportar = int(input('\nIngresa el número de la operación que deseas realizar: '))
+                    if exportar == 1:
+                        fecha_reporte = datetime.now().strftime('%d_%m_%Y')
+                        nombre_excel = f'ReporteClientesConMasNotas_{fecha_inicial.strftime("%d_%m_%Y")}_{fecha_final.strftime("%d_%m_%Y")}.xlsx'
+                        wb = Workbook()
+                        hoja = wb.active
+                        hoja.append(encabezados)
+                        hoja.append(['Fecha Inicial', fecha_inicial_str, 'Fecha Final', fecha_final_str])
+                        for cliente in clientes_con_mas_notas:
+                            hoja.append(cliente)
+                        wb.save(nombre_excel)
+                        print(f'\nInforme {nombre_excel} exportado correctamente')
+                        menu_estadisticas()
+                    elif exportar == 2:
+                        fecha_reporte = datetime.now().strftime('%d_%m_%Y')
+                        nombre_csv = f'ReporteClientesConMasNotas_{fecha_inicial.strftime("%d_%m_%Y")}_{fecha_final.strftime("%d_%m_%Y")}.csv'
+                        with open(nombre_csv, 'w', newline='') as reporte_csv:
+                            grabador = csv.writer(reporte_csv)
+                            grabador.writerow(encabezados)
+                            grabador.writerow(['Fecha Inicial', fecha_inicial_str, 'Fecha Final', fecha_final_str])
+                            grabador.writerows(clientes_con_mas_notas)
+                        print(f'\nInforme {nombre_csv} exportado correctamente')
+                        menu_estadisticas()
+                    elif exportar == 3:
+                        print('\nVolviendo al menú de Estadísticas.')
+                        menu_estadisticas()
+                    else:
+                        print('\n** ERROR, OPCION NO VÁLIDA, INTENTE NUEVAMENTE.')
+                else:
+                    print('\n** NO HAY CLIENTES CON NOTAS EN EL PERIODO SELECCIONADO **.')
+        except ValueError:
+            print('\n** DEBE INGRESAR UN NÚMERO ENTERO VÁLIDO. **')
+        except Exception as e:
+            print(f'Error: {e}')
+
+def promedio_montos_notas():
+   while True:
+        try:
+            print('\n   ----------------------------------------')
+            print('      PROMEDIO DE LOS MONTOS DE LAS NOTAS  ')
+            print('   ----------------------------------------')            
+            while True:                
+                fecha_inicial_str = input('\nIngrese la fecha inicial del período a reportar (DD/MM/YYYY): ')
+                try:
+                    fecha_inicial = datetime.strptime(fecha_inicial_str, "%d/%m/%Y").date()
+                    if fecha_inicial > datetime.now().date():
+                        print('\n** LA FECHA INICIAL NO PUEDE SER POSTERIOR A LA FECHA ACTUAL. **')
+                        continue
+                    break
+                except ValueError:
+                      print('\n** ERROR, FORMATO DE FECHA INCORRECTO. INTENTE NUEVAMENTE **')
+            while True:
+                  fecha_final_str = input('\nIngrese la fecha final del período a reportar (DD/MM/YYYY): ')
+                  try:
+                     fecha_final = datetime.strptime(fecha_final_str, "%d/%m/%Y").date()
+                     if fecha_final > datetime.now().date():
+                        print('\n** LA FECHA FINAL NO PUEDE SER POSTERIOR A LA FECHA ACTUAL. **')
+                        continue
+                     if fecha_final < fecha_inicial:
+                        print('\n** LA FECHA FINAL DEBE SER MAYOR O IGUAL A LA FECHA INICIAL. **')
+                        continue
+                     break
+                  except ValueError:
+                    print('\n** ERROR, FORMATO DE FECHA INCORRECTO. INTENTE NUEVAMENTE **')                
+            with sqlite3.connect('C:/Users/betyh/Downloads/tallermecanico.db') as conn:
+                mi_cursor = conn.cursor()
+                mi_cursor.execute('''
+                    SELECT AVG(monto) as promedio_monto
+                    FROM notas
+                   WHERE fecha BETWEEN ? AND ?
+                  ''', (fecha_inicial, fecha_final))                                  
+                promedio = mi_cursor.fetchall()[0][0]
+                print(f"{'-' * 80}\n")
+                print(f"   El monto promedio de las notas para el período seleccionado es: {promedio:.2f}\n")
+                print(f"{'-' * 80}\n")
+                menu_estadisticas()
+        except Exception as e:
+           print(f'Se produjo el siguiente error: {e}')
+           
+def menu_estadisticas():
+    while True:
+        print('---------------------------------------')
+        print('     MENÚ DE ESTADÍSTICAS         ')
+        print('---------------------------------------')
+        print('1. Servicios más prestados')
+        print('2. Clientes con más notas')
+        print('3. Promedio de montos de las notas')
+        print('4. Salir')
+        opcion_estadisticas = input('Ingrese el número de la opción deseada: ')
+        if opcion_estadisticas.isdigit():
+            opcion_estadisticas = int(opcion_estadisticas)
+            if opcion_estadisticas == 1:
+                obtener_servicios_mas_prestados()
+            elif opcion_estadisticas == 2:
+                clientes_mas_notas()
+            elif opcion_estadisticas == 3:
+                promedio_montos_notas()
+            elif opcion_estadisticas == 4:
+                menu_principal()
+            else:
+                print("** ERROR, INGRESE UNA OPCIÓN VÁLIDA **")
+        else:
+            print('\n** ERROR, INGRESE UNA OPCIÓN VÁLIDA **')
+            
+def menu_principal():
+    while True:
+        print('---------------------------------------')
+        print('  BIENVENIDO AL MENU PRINCIPAL   ')
+        print('---------------------------------------')
+        print('1. Notas')
+        print('2. Clientes')
+        print('3. Servicios')
+        print('4. Estadísticas')
+        print('5. Salir')
+        opcion = input('Ingrese el número del menú al que desea ingresar: ')
+        if opcion.isdigit():
+            opcion = int(opcion)
+            if opcion == 1:
+                print("Entraste al menú de notas")
+                menu_notas()
+            elif opcion == 2:
+                menu_clientes()
+            elif opcion == 3:
+                print("Entraste a Servicios")
+                menu_servicios()
+            elif opcion == 4:
+                print("Entraste a Estadísticas")
+                menu_estadisticas()
+            elif opcion == 5:
+                respuesta = input("¿Desea salir? (S/N) ")
+                if respuesta.lower() == 's':
+                    break
+            else:
+                print("Opción no válida. Por favor, elige una opción válida.")
+        else:
+            print('\nOpción no válida. Por favor, elige una opción válida.')
+
+menu_principal()
+
 
 
