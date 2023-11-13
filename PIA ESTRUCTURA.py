@@ -11,7 +11,6 @@ import sqlite3
 from sqlite3 import Error
 import pandas as pd
 
-
 try:
     with sqlite3.connect('C:/Users/betyh/Downloads/tallermecanico.db') as conn:
         mi_cursor = conn.cursor()
@@ -34,8 +33,6 @@ except Error as e:
     print(e)
 except Exception:
     print(f'Se produjo el siguiente error: {sys.exc_info()[0]}')
-
-
 
 def registrar_nota():
     while True:
@@ -409,6 +406,396 @@ def menu_notas():
         else:
             print('\nERROR, POR FAVOR INGRESE UNA OPCIÓN VÁLIDA.')
             
+def agregar_cliente():
+    while True:
+        print('\n════════════════════════════')
+        print('  REGISTRA UN NUEVO CLIENTE')
+        print('════════════════════════════')
+        print('\nNota: Ingrese "0" para volver al menú anterior')
+        estadoC = True
+        while True:
+            try:
+                nombre = input('\nIngrese el nombre completo del cliente: ')
+                if nombre == '0':
+                    print('\n** OPERACION CANCELADA. VOLVIENDO AL MENÚ CLIENTES **')
+                    return
+                if nombre.isdigit():
+                   print('\n** DATO NO VÁLIDO. INGRESE UN NOMBRE VÁLIDO **')
+                   continue
+                if nombre.strip() == '':
+                    print('\n** EL DATO NO PUEDE OMITIRSE. INGRESE UN DATO O (0) PARA VOLVER AL MENÚ CLIENTES **')
+                    continue
+                else:
+                    break
+            except ValueError as e:
+                print(e)
+        while True:
+            try:
+                correo = input('\nIngrese el correo electrónico del cliente: ')
+                if correo == '0':
+                    print('\n** OPERACION CANCELADA. VOLVIENDO AL MENÚ CLIENTES **')
+                    return
+                if correo.strip() == '':
+                    print('\n** EL DATO NO PUEDE OMITIRSE. INGRESE UN DATO O (0) PARA VOLVER AL MENÚ CLIENTES **')
+                    continue
+                elif validar_correo(correo):
+                    break
+                else:
+                    print('\n** EL CORREO PROPORCIONADO NO TIENE UN FORMATO VÁLIDO. INGRESELO NUEVAMENTE **')
+                    continue
+            except Error as e:
+                print(e)
+        while True:
+            try:
+                rfc = input('\nIngrese el rfc del cliente: ')
+                if rfc == '0':
+                    print('\n** OPERACION CANCELADA. VOLVIENDO AL MENÚ CLIENTES **')
+                    return
+                if rfc.strip() == '':
+                    print('\n** EL DATO NO PUEDE OMITIRSE. INGRESE UN DATO VÁLIDO **')
+                    continue
+                elif validar_rfc(rfc):
+                    break
+                else:
+                    print('\n** EL RFC PROPORCIONADO NO TIENE UN FORMATO VÁLIDO. INGRESELO NUEVAMENTE **')
+                    continue
+            except Error as e:
+                print(e)
+        try:
+            with sqlite3.connect('C:/Users/betyh/Downloads/tallermecanico.db') as conn:
+                mi_cursor = conn.cursor()
+                datos = (nombre, correo, rfc, estadoC)
+                mi_cursor.execute('INSERT INTO clientes (nombre,correo,rfc,estadoC) VALUES (?,?,?,?)', datos)
+                print('\n** Cliente registrado correctamente **')
+                print(f'Clave asignada: {mi_cursor.lastrowid}')
+        except Error as e:
+            print(f'SE PRODUJO EL SIGUIENTE ERROR: {e}')
+        finally:
+            conn.close()
+        while True:
+            agregar_cliente = input('\n¿Desea agregar otro cliente? (Si) (No): ')
+            if agregar_cliente.lower() == 's':
+                break
+            elif agregar_cliente.lower() == 'n':
+                print('\n** OPERACIÓN CANCELADA. VOLVIENDO AL MENÚ CLIENTES**')
+                return
+            else:
+                print('\n** DATO NO VÁLIDO. INGRESE (S)I Ó (N)O **')
+                continue
+
+def suspender_cliente():
+    while True:
+        print('\n════════════════════════════')
+        print('   SUSPENDER UN CLIENTE')
+        print('════════════════════════════')
+        print('\nNota: Escriba (0) si desea volver al menú clientes')
+        try:
+            with sqlite3.connect('C:/Users/betyh/Downloads/tallermecanico.db') as conn:
+                mi_cursor = conn.cursor()
+                mi_cursor.execute('SELECT ClaveCliente, nombre FROM clientes WHERE estadoC = True')
+                datos = mi_cursor.fetchall()
+                tabla = PrettyTable()
+                tabla.field_names = ["CLAVE", "NOMBRE"]
+                print('\n    Clientes Registrados')
+                for dato in datos:
+                    tabla.add_row(dato)
+                print(tabla)
+            while True:
+                try:
+                    clave_suspender = int(input('\nIngrese la clave del cliente a suspender: '))
+                    if clave_suspender == 0:
+                        print('\n** OPERACION CANCELADA. VOLVIENDO AL MENÚ CLIENTES **')
+                        return
+                    mi_cursor = conn.cursor()
+                    mi_cursor.execute('SELECT ClaveCliente FROM clientes WHERE ClaveCliente = ? AND estadoC = True', (clave_suspender,))
+                    cliente_existente = mi_cursor.fetchall()
+                    if cliente_existente:
+                      mi_cursor.execute('SELECT ClaveCliente, nombre, correo, rfc FROM clientes WHERE ClaveCliente = ?', (clave_suspender,))
+                      datos = mi_cursor.fetchall()
+                      tabla = PrettyTable()
+                      tabla.field_names = ['CLAVE', 'NOMBRE','CORREO','RFC']
+                      print('\n    Cliente a suspender')
+                      for dato in datos:
+                        tabla.add_row(dato)
+                      print(tabla)
+                      while True:
+                        confirmacion = input('\n¿Está seguro que desea suspender este registro? (S)i (N)o: ')
+                        if confirmacion.lower() == 's':
+                            mi_cursor.execute('UPDATE clientes SET estadoC = False WHERE ClaveCliente = ?', (clave_suspender,))
+                            conn.commit()
+                            print('\n** CLIENTE SUSPENDIDO CORRECTAMENTE **')
+                            return
+                        elif confirmacion.lower() == 'n':
+                            print('\n** OPERACION CANCELADA. VOLVIENDO AL MENÚ CLIENTES **')
+                            return
+                        else:
+                            print('\n** DATO NO VÁLIDO. POR FAVOR, INGRESE (S) PARA CONFIRMAR LA ACCIÓN O (N) PARA CANCELAR LA OPERACIÓN **')
+                    else:
+                      print('\n** EL CLIENTE NO EXISTE O SE ENCUENTRA SUSPENDIDO. **')
+                      continue
+                except Exception:
+                  print(f'\n** DATO NO VÁLIDO. INGRESE LA CLAVE DE ALGÚN CLIENTE **')
+        except Error as e:
+            print(e)
+        except Exception:
+            print(f'Se produjo el siguiente error: {sys.exc_info()[0]}')          
+        finally:
+            conn.close()
+
+def recuperar_cliente():
+    while True:
+        print('\n════════════════════════════')
+        print('   RECUPERAR UN CLIENTE')
+        print('════════════════════════════')
+        print('\nNota: Escriba (0) si desea volver al menú clientes')
+        try:
+            with sqlite3.connect('C:/Users/betyh/Downloads/tallermecanico.db') as conn:
+                mi_cursor = conn.cursor()
+                mi_cursor.execute('SELECT ClaveCliente, nombre FROM clientes WHERE estadoC = False')
+                datos = mi_cursor.fetchall()
+                tabla = PrettyTable()
+                tabla.field_names = ["CLAVE", "NOMBRE"]
+                print('\n Clientes Suspendidos')
+                for dato in datos:
+                    tabla.add_row(dato)
+                print(tabla)
+            while True:
+                try:
+                    clave_recuperar = int(input('\nIngrese la clave del cliente a recuperar: '))
+                    if clave_recuperar == 0:
+                        print('\n** OPERACION CANCELADA. VOLVIENDO AL MENÚ CLIENTES **')
+                        return
+                    mi_cursor = conn.cursor()
+                    mi_cursor.execute('SELECT ClaveCliente FROM clientes WHERE ClaveCliente = ? AND estadoC = False', (clave_recuperar,))
+                    cliente_suspendido = mi_cursor.fetchall()
+                    if cliente_suspendido:
+                        mi_cursor.execute('SELECT ClaveCliente, nombre, correo, rfc FROM clientes WHERE ClaveCliente = ?', (clave_recuperar,))
+                        datos = mi_cursor.fetchall()
+                        tabla = PrettyTable()
+                        tabla.field_names = ['CLAVE', 'NOMBRE','CORREO','RFC']
+                        print('\n    Cliente a recuperar')
+                        for dato in datos:
+                            tabla.add_row(dato)
+                        print(tabla)
+                        while True:
+                            confirmacion = input('\n¿Está seguro que desea recuperar este registro? (S)i (N)o: ')
+                            if confirmacion.lower() == 's':
+                                mi_cursor.execute('UPDATE clientes SET estadoC = True WHERE ClaveCliente = ?', (clave_recuperar,))
+                                conn.commit()
+                                print('\n** ClIENTE RECUPERADO CORRECTAMENTE **')
+                                return
+                            elif confirmacion.lower() == 'n':
+                                print('\n** OPERACION CANCELADA. VOLVIENDO AL MENÚ CLIENTES **')
+                                return
+                            else:
+                                print('\n** DATO NO VÁLIDO. POR FAVOR, INGRESE (S) PARA CONFIRMAR LA ACCIÓN O (N) PARA CANCELAR LA OPERACIÓN **')
+                    else:
+                        print('\n** EL CLIENTE NO SE ENCUENTRA SUSPENDIDO. **')
+                except Exception:
+                    print(f'\n** DATO NO VÁLIDO. INGRESE LA CLAVE DE ALGÚN CLIENTE **')
+        except Error as e:
+            print(e)
+        except Exception:
+            print(f'Se produjo el siguiente error: {sys.exc_info()[0]}')          
+        finally:
+            conn.close()
+
+def listado_clientes_registrados():
+    while True:
+        print('\n-----------------------------------------')
+        print(' SUBMENÚ LISTADO DE CLIENTES REGISTRADOS')
+        print('-----------------------------------------')
+        print('1. Ordenado por clave')
+        print('2. Ordenado por nombre')
+        print('3. Volver al menú anterior')
+        opcion = int(input('\nIngresa el número de la operación que deseas realizar: '))
+        encabezados = ['CLAVE', 'NOMBRE', 'CORREO', 'RFC']
+        if opcion == 1:
+            try:
+                with sqlite3.connect('C:/Users/betyh/Downloads/tallermecanico.db') as conn:
+                    mi_cursor = conn.cursor()
+                    mi_cursor.execute('SELECT ClaveCliente, nombre, correo, rfc FROM clientes WHERE estadoC = True ORDER BY ClaveCliente')
+                    datos = mi_cursor.fetchall()
+                    tabla = PrettyTable()
+                    tabla.field_names = (encabezados)
+                    print(f'\n                    CLIENTES ACTIVOS')
+                    for dato in datos:
+                        tabla.add_row(dato)
+                    print(tabla)
+                    print('\n---------------------------------------')
+                    print('           EXPORTAR REPORTE')
+                    print('---------------------------------------')
+                    print('1. Exportar reporte como archivo EXCEL')
+                    print('2. Exportar reporte como archivo CSV')
+                    print('3. Volver al menú de reportes')
+                    exportar = int(input('\nIngresa el número de la operación que deseas realizar: '))
+                    if exportar == 1:
+                        fecha_reporte = datetime.now().strftime('%d_%m_%Y')
+                        nombre_excel = f'ReporteClientesActivosPorClave_{fecha_reporte}.xlsx'
+                        wb = Workbook()
+                        hoja = wb.active
+                        hoja.append(encabezados)
+                        for dato in datos:
+                            hoja.append(dato)
+                        wb.save(nombre_excel)
+                        print(f'\nInforme {nombre_excel} exportado correctamente')
+                    elif exportar == 2:
+                        fecha_reporte = datetime.now().strftime('%d_%m_%Y')
+                        nombre_csv = f'ReporteClientesActivosPorClave_{fecha_reporte}.csv'
+                        with open(nombre_csv, 'w', newline='') as reporte_csv:
+                            grabador = csv.writer(reporte_csv)
+                            grabador.writerow(encabezados)
+                            grabador.writerows(datos)
+                        print(f'\nInforme {nombre_csv} exportado correctamente')
+                    elif exportar == 3:
+                        break
+            except Exception as e:
+                print(f"Error: {e}")
+        elif opcion == 2:
+            try:
+                with sqlite3.connect('C:/Users/betyh/Downloads/tallermecanico.db') as conn:
+                    mi_cursor = conn.cursor()
+                    mi_cursor.execute('SELECT ClaveCliente, nombre, correo, rfc FROM clientes WHERE estadoC = True ORDER BY nombre')
+                    datos = mi_cursor.fetchall()
+                    tabla = PrettyTable()
+                    tabla.field_names = (encabezados)
+                    print(f'\n                    CLIENTES ACTIVOS')
+                    for dato in datos:
+                        tabla.add_row(dato)
+                    print(tabla)
+                    print('\n---------------------------------------')
+                    print('           EXPORTAR REPORTE')
+                    print('---------------------------------------')
+                    print('1. Exportar reporte como archivo EXCEL')
+                    print('2. Exportar reporte como archivo CSV')
+                    print('3. Volver al menú de reportes')
+                    exportar = int(input('\nIngresa el número de la operación que deseas realizar: '))
+                    if exportar == 1:
+                        fecha_reporte = datetime.now().strftime('%d_%m_%Y')
+                        nombre_excel = f'ReporteClientesActivosPorNombre_{fecha_reporte}.xlsx'
+                        wb = Workbook()
+                        hoja = wb.active
+                        hoja.append(encabezados)
+                        for dato in datos:
+                            hoja.append(dato)
+                        wb.save(nombre_excel)
+                        print(f'\nInforme {nombre_excel} exportado correctamente')
+                    elif exportar == 2:
+                        fecha_reporte = datetime.now().strftime('%d_%m_%Y')
+                        nombre_csv = f'ReporteClientesActivosPorNombre_{fecha_reporte}.csv'
+                        with open(nombre_csv, 'w', newline='') as reporte_csv:
+                            grabador = csv.writer(reporte_csv)
+                            grabador.writerow(encabezados)
+                            grabador.writerows(datos)
+                        print(f'\nInforme {nombre_csv} exportado correctamente')
+                    elif exportar == 3:
+                        break
+            except Exception as e:
+                print(f"Error: {e}")
+        elif opcion == 3:
+            break
+            
+def consultas_reportes_clientes():
+    while True:
+        print('\n═══════════════════════════════════')
+        print(' CONSULTAS Y REPORTES DE CLIENTES')
+        print('═══════════════════════════════════')
+        print('1. Listado de clientes registrados')
+        print('2. Búsqueda por clave')
+        print('3. Búsqueda por nombre')
+        print('4. Volver al menú clientes')        
+        try:
+            consulta = int(input('\nIngresa el número de la operación que desea realizar: '))          
+            if 1 <= consulta <= 4:
+                if consulta == 1:
+                    listado_clientes_registrados()                   
+                elif consulta == 2:
+                    try:
+                        with sqlite3.connect('C:/Users/betyh/Downloads/tallermecanico.db') as conn:
+                            mi_cursor = conn.cursor()
+                            mi_cursor.execute('SELECT ClaveCliente, nombre FROM clientes ORDER BY ClaveCliente')
+                            datos_clientes = mi_cursor.fetchall()
+                            tabla_clientes = PrettyTable()
+                            tabla_clientes.field_names = ['CLAVE', 'NOMBRE']
+                            for cliente in datos_clientes:
+                                tabla_clientes.add_row(cliente)                                
+                            print(tabla_clientes)                           
+                            while True:    
+                                clave_consultar = int(input('\nIngrese la clave del cliente a consultar o ingrese "0" para volver al menú anterior: '))                                
+                                if clave_consultar == 0:
+                                    break                                  
+                                mi_cursor.execute('SELECT ClaveCliente, nombre, correo, rfc FROM clientes WHERE ClaveCliente = ?', (clave_consultar,))
+                                datos_cliente_consultado = mi_cursor.fetchall()
+                                tabla_cliente_consultado = PrettyTable()
+                                tabla_cliente_consultado.field_names = ['CLAVE', 'NOMBRE', 'CORREO', 'RFC']                               
+                                if datos_cliente_consultado:
+                                    print(f'\n    Cliente Encontrado')                                    
+                                    for dato in datos_cliente_consultado:
+                                        tabla_cliente_consultado.add_row(dato)
+                                    print(tabla_cliente_consultado)
+                                    break
+                                else:
+                                    print(f'\n** NO SE ENCONTRÓ UN REGISTRO ASOCIADO A LA CLAVE {clave_consultar}')
+                                    break
+                    except Exception:
+                        print(f'\n** DATO NO VÁLIDO. INGRESE LA CLAVE DE ALGÚN CLIENTE **')                      
+                elif consulta == 3:
+                    while True:
+                        try:
+                            nombre_consultar = input('\nIngrese el nombre completo del cliente a consultar o ingrese "0" para volver al menú anterior: ')                           
+                            if nombre_consultar == '0':
+                                break                               
+                            else:
+                                with sqlite3.connect('C:/Users/betyh/Downloads/tallermecanico.db') as conn:
+                                    mi_cursor = conn.cursor()
+                                    datos = {'nombre': nombre_consultar.lower()}
+                                    mi_cursor.execute('SELECT ClaveCliente, nombre, correo, rfc FROM clientes WHERE LOWER (nombre) = :nombre', datos)
+                                    datos1 = mi_cursor.fetchall()
+                                    tabla = PrettyTable()
+                                    tabla.field_names = ['CLAVE', 'NOMBRE', 'CORREO', 'RFC']                                    
+                                    if datos1:
+                                        print(f'\n    Cliente Encontrado')                                        
+                                        for dato in datos1:
+                                            tabla.add_row(dato)                                           
+                                        print(tabla)
+                                        break                                        
+                                    else:
+                                        print(f'\n** NO SE ENCONTRÓ UN REGISTRO ASOCIADO {nombre_consultar}')                                        
+                        except Exception:
+                            print(f'\n** DATO NO VÁLIDO. INGRESE EL NOMBRE DE ALGÚN CLIENTE **')                            
+                elif consulta == 4:
+                    return
+            else:
+                print('\n** DATO NO VÁLIDO. INGRESE EL NÚMERO DE ALGUNA OPCIÓN MOSTRADA **')
+        except ValueError:
+            print('\n** DATO NO VÁLIDO. INGRESE EL NÚMERO DE ALGUNA OPCIÓN MOSTRADA **')
+
+def menu_clientes():
+    while True:
+        print('\n--------------------------')
+        print('      MENÚ CLIENTES      ')
+        print('--------------------------')
+        print('1. Agregar cliente       ')
+        print('2. Suspender cliente     ')
+        print('3. Recuperar cliente     ')
+        print('4. Consultas y reportes   ')
+        print('5. Volver al menú principal   ')
+        try:
+          opcion = int(input('\nIngresa el número de la operación que deseas realizar: '))
+          if opcion == 1:
+              agregar_cliente()
+          elif opcion == 2:
+              suspender_cliente()
+          elif opcion == 3:
+              recuperar_cliente()
+          elif opcion == 4:
+              consultas_reportes_clientes()
+          elif opcion == 5:
+              return
+          else:
+              raise ValueError
+        except ValueError:
+              print('\n** OPCIÓN NO VÁLIDA. POR FAVOR, REGISTRE EL NÚMERO DE ALGUNA OPCIÓN MOSTRADA **')
 
 
 
