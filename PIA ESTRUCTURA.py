@@ -797,6 +797,48 @@ def menu_clientes():
         except ValueError:
               print('\n** OPCIÓN NO VÁLIDA. POR FAVOR, REGISTRE EL NÚMERO DE ALGUNA OPCIÓN MOSTRADA **')
 
+función menu_principal():
+    mientras Verdadero:
+        mostrar '---------------------------------------'
+        mostrar '  BIENVENIDO AL MENU PRINCIPAL   '
+        mostrar '---------------------------------------'
+        mostrar '1. Notas'
+        mostrar '2. Clientes'
+        mostrar '3. Servicios'
+        mostrar '4. Estadísticas'
+        mostrar '5. Salir'
+        opción = ingresar_input('Ingrese el número del menú al que desea ingresar: ')
+        
+        si opción es un número:
+            opción = convertir_a_entero(opción)
+            
+            si opción es 1:
+                mostrar "Entraste al menú de notas"
+                llamar a la función menu_notas()
+                
+            sino, si opción es 2:
+                llamar a la función menu_clientes()
+                
+            sino, si opción es 3:
+                mostrar "Entraste a Servicios"
+                llamar a la función menu_servicios()
+                
+            sino, si opción es 4:
+                mostrar "Entraste a Estadísticas"
+                llamar a la función menu_estadisticas()
+                
+            sino, si opción es 5:
+                respuesta = ingresar_input("¿Desea salir? (S/N) ")
+                si respuesta en minúsculas es 's':
+                    salir del bucle
+                
+            sino:
+                mostrar "Opción no válida. Por favor, elige una opción válida."
+                
+        sino:
+            mostrar '\nOpción no válida. Por favor, elige una opción válida.'
+
+llamar a la función menu_principal()
 
 
 
